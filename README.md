@@ -27,6 +27,60 @@ By leveraging the **Firebase AI Logic SDK**, GrassVault intelligently routes tas
 - **Secure Cloud Sync:** Real-time synchronization powered by Firebase Firestore, secured with Firebase App Check.
 
 ---
+## Systems Architecture 🏦
+---
+
+```
+graph TB
+    subgraph Client_Tier ["Edge Client Tier (Cross-Platform)"]
+        direction TB
+        Web["Chrome Extension (Manifest V3)<br/>• Content Script (DOM Observer)<br/>• Background Service Worker<br/>• Popup & Dashboard UI"]
+        Android["Android Client<br/>• Mobile Application UI<br/>• Local Storage & Clipboard"]
+        iOS["iOS Client<br/>• Share Sheet Extension<br/>• Mobile Application UI"]
+    end
+
+    subgraph Edge_Inference ["On-Device Inference Tier (Firebase AI Logic)"]
+        direction LR
+        GeminiWeb["Gemini Nano<br/>(Web / window.ai)"]
+        GeminiAndroid["Gemini Nano<br/>(Android Native)"]
+        AppleModel["Apple Foundation Models<br/>(iOS Native)"]
+    end
+
+    subgraph Hybrid_Router ["Hybrid Inference Router"]
+        Engine["hybridEngine.js<br/>• Token Threshold Check (<4k)<br/>• Local Availability Validation<br/>• Automatic Fallback Switch"]
+    end
+
+    subgraph Cloud_Tier ["Firebase Cloud Backend Tier"]
+        direction TB
+        AppCheck["Firebase App Check<br/>(Zero-Trust Security & Debug Tokens)"]
+        CloudAI["Cloud Gemini API<br/>(via Firebase AI Logic)"]
+        Firestore["Firebase Firestore<br/>(Cross-Device Knowledge Graph & Sync)"]
+        Auth["Firebase Auth<br/>(Secure User Session)"]
+    end
+
+    %% Client to Router connections
+    Web --> Engine
+    Android --> Engine
+    iOS --> Engine
+
+    %% Local routing paths
+    Engine -->|Short payload & local ready| GeminiWeb
+    Engine -->|Short payload & local ready| GeminiAndroid
+    Engine -->|Short payload & local ready| AppleModel
+
+    GeminiWeb -.->|Zero-latency local result| Web
+    GeminiAndroid -.->|Zero-latency local result| Android
+    AppleModel -.->|Zero-latency local result| iOS
+
+    %% Cloud fallback path
+    Engine -->|Exceeds token limit / Complex synthesis| AppCheck
+    AppCheck --> CloudAI
+    CloudAI -->|Deep multi-document response| Engine
+
+    %% Synchronization path
+    Web & Android & iOS -->|Encrypted state sync| Firestore
+    Web & Android & iOS -.-> Auth
+---
 
 ## Tech Stack
 
@@ -34,7 +88,7 @@ By leveraging the **Firebase AI Logic SDK**, GrassVault intelligently routes tas
 - **Extension Engine:** Chrome Extension Manifest V3 (Service Workers, Content Scripts, MutationObservers)
 - **AI & Logic:** Firebase AI Logic SDK, Gemini Nano, Apple Foundation Models
 - **Backend & Sync:** Firebase Firestore, Firebase Auth, App Check
-
+```
 ---
 
 ## Project Structure
@@ -80,4 +134,5 @@ grassvault/
 ---
 ## License
 MIT License — built for the #BuildHybridAI 2026 Hackathon.
+
 
